@@ -180,3 +180,6 @@ re模块常用方法
 - re.findall(pattern,string) 对string返回一个不重复的pattern列表
 - re.sub(pattern,epel,string,count=0) 返回通过repl替换string最左边出现的pattern字符串 
 
+
+
+
