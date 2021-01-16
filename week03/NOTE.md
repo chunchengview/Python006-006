@@ -1,85 +1,94 @@
 学习笔记
-第一招、mysql服务的启动和停止
-net stop mysql
-net start mysql
 
-第二招、登陆mysql
+一、在 Linux 环境下，安装 MySQL5.6 以上版本，修改字符集为 UTF8mb4 并验证，新建一个数据库 testdb，并为该数据库增加远程访问的用。
+  1、将修改字符集的配置项、验证字符集的 SQL 语句作为作业内容提交
+  alter database testdb character set utf8mb4;  
+  2、将增加远程用户的 SQL 语句作为作业内容提交
+  CREATE USER 'testroot'@'%' IDENTIFIED BY 'testpass';
+  GRANT ALL PRIVILEGES ON testdb.* TO 'root' @'%';
+  
+  
+二、使用 sqlalchemy ORM 方式创建如下表，使用 PyMySQL 对该表写入 3 条测试数据，并读取:
+   1、用户 id、用户名、年龄、生日、性别、学历、字段创建时间、字段更新时间
+   2、将 ORM、插入、查询语句作为作业内容提交
+   
+三、 为以下 sql 语句标注执行顺序：
+    SELECT DISTINCT player_id, player_name, count(*) as num   # 5
+    FROM player JOIN team ON player.team_id = team.team_id    # 1
+    WHERE height > 1.80                                       # 2
+    GROUP BY player.team_id                                   # 3
+    HAVING num > 2                                            # 4
+    ORDER BY num DESC                                         # 6
+    LIMIT 2                                                   # 7
+    
+四、 以下两张基于 id 列，分别使用 INNER JOIN、LEFT JOIN、 RIGHT JOIN 的结果是什么?
+Table1
+id name
+1 table1_table2
+2 table1
+Table2
+id name
+1 table1_table2
+3 table2
+举例: INNER JOIN
+SELECT Table1.id, Table1.name, Table2.id, Table2.name
+FROM Table1
+INNER JOIN Table2
+ON Table1.id = Table2.id;
+结果：取 满足 Table1.id = Table2.id 条件的所有值；交集
+LEFT JOIN
+SELECT Table1.id, Table1.name, Table2.id, Table2.name
+FROM Table1
+LEFT JOIN Table2
+ON Table1.id = Table2.id;
+结果： Table1 存在，但Table2 不存在的值也显示，但Table2.id，Table2.name 列为NULL
+RIGHT JOIN
+SELECT Table1.id, Table1.name, Table2.id, Table2.name
+FROM Table1
+RIGHT JOIN Table2
+ON Table1.id = Table2.id;
+结果： Table2 存在，但Table1 不存在的值也显示，但Table1.id，Table1.name 列为NULL
 
-语法如下： mysql -u用户名 -p用户密码
+ 五、使用 MySQL 官方文档，学习通过 sql 语句为上题中的 id 和 name 增加索引，并验证。根据执行时间，
+    增加索引以后是否查询速度会增加？请论述原因，并思考什么样的场景下增加索引才有效。
+   会增加，索引通过 B+ 树类似于二分查找法，所以在命中索引时会很快。
+   比较频繁的作为查询字段、唯一性较高、更新不频繁的，应该建立索引。 
 
-键入命令mysql -uroot -p， 回车后提示你输入密码，输入12345，然后回车即可进入到mysql中了，mysql的提示符是：
-mysql>
-注意，如果是连接到另外的机器上，则需要加入一个参数-h机器IP
-
-第三招、增加新用户
-
-格式：grant 权限 on 数据库.* to 用户名@登录主机 identified by "密码"
-如，增加一个用户user1密码为password1，让其可以在本机上登录， 并对所有数据库有查询、插入、修改、删除的权限。首先
-
-用以root用户连入mysql，然后键入以下命令：
-grant select,insert,update,delete on *.* to user1@localhost Identified by "password1";
-如果希望该用户能够在任何机器上登陆mysql，则将localhost改为"%"。
-如果你不想user1有密码，可以再打一个命令将密码去掉。
-grant select,insert,update,delete on mydb.* to user1@localhost identified by "";
-
-第四招： 操作数据库
-登录到mysql中，然后在mysql的提示符下运行下列命令，每个命令以分号结束。
-1、显示数据库列表。
-show databases;
-缺省有两个数据库：mysql和test。 mysql库存放着mysql的系统和用户权限信息，我们改密码和新增用户，实际上就是对这个库进行操作。
-2、显示库中的数据表：
-use mysql;
-show tables;
-3、显示数据表的结构：
-describe 表名;
-4、建库与删库：
-create database 库名;
-drop database 库名;
-5、建表：
-use 库名;
-create table 表名(字段列表);
-drop table 表名;
-6、清空表中记录：
-delete from 表名;
-7、显示表中的记录：
-select * from 表名;
-
-第五招、导出和导入数据
-
-1. 导出数据：
-mysqldump --opt test > mysql.test
-即将数据库test数据库导出到mysql.test文件，后者是一个文本文件
-如：mysqldump -u root -p123456 --databases dbname > mysql.dbname
-就是把数据库dbname导出到文件mysql.dbname中。
-2. 导入数据:
-mysqlimport -u root -p123456 < mysql.dbname。
-不用解释了吧。
-3. 将文本数据导入数据库:
-文本数据的字段数据之间用tab键隔开。
-use test;
-load data local infile "文件名" into table 表名;
-1:使用SHOW语句找出在服务器上当前存在什么数据库：
-mysql> SHOW DATABASES;
-2:创建一个数据库MYSQLDATA
-mysql> CREATE DATABASE MYSQLDATA;
-3:选择你所创建的数据库
-mysql> USE MYSQLDATA; (按回车键出现Database changed 时说明操作成功!)
-4:查看现在的数据库中存在什么表
-mysql> SHOW TABLES;
-5:创建一个数据库表
-mysql> CREATE TABLE MYTABLE (name VARCHAR(20), sex CHAR(1));
-6:显示表的结构：
-mysql> DESCRIBE MYTABLE;
-7:往表中加入记录
-mysql> insert into MYTABLE values ("hyq","M");
-8:用文本方式将数据装入数据库表中(例如D:/mysql.txt)
-mysql> LOAD DATA LOCAL INFILE "D:/mysql.txt" INTO TABLE MYTABLE;
-9:导入.sql文件命令(例如D:/mysql.sql)
-mysql>use database;
-mysql>source d:/mysql.sql;
-10:删除表
-mysql>drop TABLE MYTABLE;
-11:清空表
-mysql>delete from MYTABLE;
-12:更新表中数据
-mysql>update MYTABLE set sex="f" where name='hyq';
+六、张三给李四通过网银转账 100 极客币，现有数据库中三张表：
+一张为用户表，包含用户 ID 和用户名字，另一张为用户资产表，包含用户 ID 用户总资产， 第三张表为审计用表，记录了转账时间，转账 id，被转账 id，转账金额。
+请合理设计三张表的字段类型和表结构；
+class User_table(Base):
+    __tablename__ = 'user'
+    uid = Column(Integer(), primary_key=True, autoincrement=True)
+    name = Column(String(15), nullable=True, unique=True)
+class Asset_table(Base):
+    __tablename__ = 'asset'
+    uid = Column(Integer(), primary_key=True, nullable=True)
+    asset = Column(DECIMAL(19, 4), nullable=True)
+class Record_tabl(Base):
+    __tablename__ = 'record'
+    one_id = Column(Integer(), primary_key=True)
+    other_id = Column(Integer(), primary_key=True)
+    deal = Column(DECIMAL(19, 4), nullable=True)
+    create_date = Column(DateTime(), nullable=True)
+请实现转账 100 极客币的 SQL(可以使用 pymysql 或 sqlalchemy-orm 实现)，张三余额不足，转账过程中数据库 crash 等情况需保证数据一致性。
+def deal(one, other, deal, session):
+    # 获取转账者 ID
+    one_id = session.query(User_table.uid).filter(User_table.name == one).one()[0]
+    # 被转账者 ID
+    other_id = session.query(User_table.uid).filter(User_table.name == other).one()[0]
+    # 转账者账户余额
+    one_mon = session.query(Asset_table.asset).filter(Asset_table.uid==one_id, Asset_table.asset>deal).one()[0]
+    # 被转账者账户余额
+    other_mon = session.query(Asset_table.asset).filter(Asset_table.uid==other_id).one()[0]
+    one_mon -= deal
+    other_mon += deal
+    # 更新双方余额
+    session.query(Asset_table.asset).filter(Asset_table.uid==one_id).update({Asset_table.asset: one_mon})
+    session.query(Asset_table.asset).filter(Asset_table.uid == other_id).update({Asset_table.asset: other_mon})  
+    # 添加账单
+    record = Record_tabl(one_id=one_id,
+                         other_id=other_id,
+                         create_date=datetime.now(),
+                         deal=deal)
+    session.add(record)
